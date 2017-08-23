@@ -1,0 +1,15 @@
+---
+title: "Reviewing data"
+output: html_notebook
+---
+
+```{r}
+library(data.table)
+
+train_1 <- fread("data/train_1.csv", header = T)
+key_1 <- fread("data/key_1.csv", header = T)
+sample_submission_1 <- fread("data/sample_submission_1.csv", header = T)
+
+head(sample_submission_1)
+
+```
