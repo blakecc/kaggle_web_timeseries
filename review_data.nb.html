@@ -172,18 +172,31 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
+<div id="load-data" class="section level1">
+<h1>Load data</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-frame-begin eyJtZXRhZGF0YSI6eyJjbGFzc2VzIjpbImRhdGEudGFibGUiLCJkYXRhLmZyYW1lIl0sIm5jb2wiOjIsIm5yb3ciOjZ9LCJyZGYiOiJINHNJQUFBQUFBQUFBM1dRUFUvRE1CQ0dyMDRUMUlnQ0VyK2pVZU44Tk41WldCbXFyazVzUTBSd3FzUVZqUHh1aGdZbjlTR0loQ1hiNThldjcrNzEwOE9CaG9jUUFBaDRuZ2ZFcytHUzJHVUJTMWlOK3dlQWR6OEpBTzdzRE56RmRhbFNLU3JGY3NZVk1rYVpGTFJVR1MwWk1xVW9FMXVWeFNLcmtFbFdGTHNreVZncDh4OGQzOFkwVFZLYUp4eFpXcWhZc2lTTGQ1emE4M3FxLysvNDA3aXYrWnZzWGRQRVFmSW9YQlRzNjc0Mi9meFIxZkFlSHlFTUJUYzhVcDNOTjVPdnV2WTl3anBqYytUVExzTXdmTm50UEJOZnRVZFR0OXBLeWZpZi9xektvcHVCMjVNZVU0dE45WExTcnhzMmRqSmRYOGJheGNHdm1GeEtrc0dsOHRHczFNKzFsbWl5NGFWczNPSEdXcGdjUk1ldTFnWXRXOXBIcGpVY2RXSFZOa2dtYjNEK0JvbmdFWjA5QWdBQSJ9 -->
-<div data-pagedtable="false">
-<script data-pagedtable-source type="application/json">
-{"columns":[{"label":["Id"],"name":[1],"type":["chr"],"align":["left"]},{"label":["Visits"],"name":[2],"type":["int"],"align":["right"]}],"data":[{"1":"bf4edcf969af","2":"0"},{"1":"929ed2bf52b9","2":"0"},{"1":"ff29d0f51d5c","2":"0"},{"1":"e98873359be6","2":"0"},{"1":"fa012434263a","2":"0"},{"1":"48f1e93517a2","2":"0"}],"options":{"columns":{"min":{},"max":[10],"total":[2]},"rows":{"min":[10],"max":[10],"total":[6]},"pages":{}}}
-  </script>
-</div>
-<!-- rnb-frame-end -->
-<!-- rnb-chunk-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkYXRhLnRhYmxlKVxuXG50cmFpbl8xIDwtIGZyZWFkKFwiZGF0YS90cmFpbl8xLmNzdlwiLCBoZWFkZXIgPSBUKVxua2V5XzEgPC0gZnJlYWQoXCJkYXRhL2tleV8xLmNzdlwiLCBoZWFkZXIgPSBUKVxuc2FtcGxlX3N1Ym1pc3Npb25fMSA8LSBmcmVhZChcImRhdGEvc2FtcGxlX3N1Ym1pc3Npb25fMS5jc3ZcIiwgaGVhZGVyID0gVClcblxuaGVhZChrZXlfMSlcblxuYGBgIn0= -->
+<pre class="r"><code>library(data.table)
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmV2aWV3aW5nIGRhdGEiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KCmBgYHtyfQpsaWJyYXJ5KGRhdGEudGFibGUpCgp0cmFpbl8xIDwtIGZyZWFkKCJkYXRhL3RyYWluXzEuY3N2IiwgaGVhZGVyID0gVCkKa2V5XzEgPC0gZnJlYWQoImRhdGEva2V5XzEuY3N2IiwgaGVhZGVyID0gVCkKc2FtcGxlX3N1Ym1pc3Npb25fMSA8LSBmcmVhZCgiZGF0YS9zYW1wbGVfc3VibWlzc2lvbl8xLmNzdiIsIGhlYWRlciA9IFQpCgpoZWFkKHNhbXBsZV9zdWJtaXNzaW9uXzEpCgpgYGA=</div>
+train_1 &lt;- fread(&quot;data/train_1.csv&quot;, header = T)
+key_1 &lt;- fread(&quot;data/key_1.csv&quot;, header = T)
+sample_submission_1 &lt;- fread(&quot;data/sample_submission_1.csv&quot;, header = T)
+
+head(key_1)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="construct-sample-submission" class="section level1">
+<h1>Construct sample submission</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-chunk-end -->
+</div>
+
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmV2aWV3aW5nIGRhdGEiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KCiMgTG9hZCBkYXRhCgpgYGB7cn0KbGlicmFyeShkYXRhLnRhYmxlKQoKdHJhaW5fMSA8LSBmcmVhZCgiZGF0YS90cmFpbl8xLmNzdiIsIGhlYWRlciA9IFQpCmtleV8xIDwtIGZyZWFkKCJkYXRhL2tleV8xLmNzdiIsIGhlYWRlciA9IFQpCnNhbXBsZV9zdWJtaXNzaW9uXzEgPC0gZnJlYWQoImRhdGEvc2FtcGxlX3N1Ym1pc3Npb25fMS5jc3YiLCBoZWFkZXIgPSBUKQoKaGVhZChrZXlfMSkKCmBgYAoKIyBDb25zdHJ1Y3Qgc2FtcGxlIHN1Ym1pc3Npb24KCmBgYHtyfQoKCgpgYGA=</div>
 
 
 
