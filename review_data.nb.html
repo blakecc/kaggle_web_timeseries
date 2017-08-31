@@ -172,19 +172,54 @@ $(document).ready(function () {
 
 
 <!-- rnb-text-begin -->
+<div id="load-libraries" class="section level1">
+<h1>Load libraries</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5saWJyYXJ5KHN0cmluZ3IpXG5saWJyYXJ5KGx1YnJpZGF0ZSlcblxuYGBgIn0= -->
+<pre class="r"><code>library(tidyverse)
+library(stringr)
+library(lubridate)
+</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
 <div id="load-data" class="section level1">
 <h1>Load data</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkYXRhLnRhYmxlKVxuXG50cmFpbl8xIDwtIGZyZWFkKFwiZGF0YS90cmFpbl8xLmNzdlwiLCBoZWFkZXIgPSBUKVxua2V5XzEgPC0gZnJlYWQoXCJkYXRhL2tleV8xLmNzdlwiLCBoZWFkZXIgPSBUKVxuc2FtcGxlX3N1Ym1pc3Npb25fMSA8LSBmcmVhZChcImRhdGEvc2FtcGxlX3N1Ym1pc3Npb25fMS5jc3ZcIiwgaGVhZGVyID0gVClcblxuaGVhZChrZXlfMSlcblxuYGBgIn0= -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeShkYXRhLnRhYmxlKVxuXG50cmFpbl8xIDwtIGZyZWFkKFwiZGF0YS90cmFpbl8xLmNzdlwiLCBoZWFkZXIgPSBUKVxua2V5XzEgPC0gZnJlYWQoXCJkYXRhL2tleV8xLmNzdlwiLCBoZWFkZXIgPSBUKVxuc2FtcGxlX3N1Ym1pc3Npb25fMSA8LSBmcmVhZChcImRhdGEvc2FtcGxlX3N1Ym1pc3Npb25fMS5jc3ZcIiwgaGVhZGVyID0gVClcblxuIyBoZWFkKHNhbXBsZV9zdWJtaXNzaW9uXzEsIDEwKVxuIyBoZWFkKGtleV8xLCAxMClcbiMgaGVhZCh0cmFpbl8xWyw1NTFdLCAxMClcblxuYGBgIn0= -->
 <pre class="r"><code>library(data.table)
 
 train_1 &lt;- fread(&quot;data/train_1.csv&quot;, header = T)
 key_1 &lt;- fread(&quot;data/key_1.csv&quot;, header = T)
 sample_submission_1 &lt;- fread(&quot;data/sample_submission_1.csv&quot;, header = T)
 
-head(key_1)
+# head(sample_submission_1, 10)
+# head(key_1, 10)
+# head(train_1[,551], 10)
 </code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
+<!-- rnb-text-begin -->
+</div>
+<div id="split-key" class="section level1">
+<h1>Split key</h1>
+<!-- rnb-text-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua2V5XzIgPC0ga2V5XzEgJT4lXG4gIHNlcGFyYXRlKFBhZ2UsIGMoXCJQYWdlXCIsIFwiRGF0ZVwiKSwgc2VwID0gLTExKSAlPiVcbiAgbXV0YXRlKFBhZ2UgPSBzdHJfc3ViKFBhZ2UsIDEsIC0yKSlcbiMgICBtdXRhdGUoT3RoZXIgPSBzdHJfc3ViKE90aGVyLCAyKSkgJT4lXG4jICAgbXV0YXRlKExhbmcgPSBzdHJfc3ViKExhbmcsIDEsIC0yKSkgJT4lXG4jICAgc2VwYXJhdGUoT3RoZXIsIGMoXCJkZXZpY2VcIiwgXCJhZ2VudFwiLCBcImRhdGVcIiksIHNlcCA9IFwiX1wiKSAlPiVcbiMgICBtdXRhdGUoVG9waWMgPSBzdHJfc3ViKFRvcGljLCAxLCAtMikpICU+JVxuIyAgIG11dGF0ZShkYXRlID0gYXMuUE9TSVhjdChkYXRlKSlcbiMgXG4jIGtleV8xWzIyMjA6MjIzMCxdXG4jIGtleV8xWzIwMjA6MjAzMCxdXG5gYGAifQ== -->
+<pre class="r"><code>key_2 &lt;- key_1 %&gt;%
+  separate(Page, c(&quot;Page&quot;, &quot;Date&quot;), sep = -11) %&gt;%
+  mutate(Page = str_sub(Page, 1, -2))
+#   mutate(Other = str_sub(Other, 2)) %&gt;%
+#   mutate(Lang = str_sub(Lang, 1, -2)) %&gt;%
+#   separate(Other, c(&quot;device&quot;, &quot;agent&quot;, &quot;date&quot;), sep = &quot;_&quot;) %&gt;%
+#   mutate(Topic = str_sub(Topic, 1, -2)) %&gt;%
+#   mutate(date = as.POSIXct(date))
+# 
+# key_1[2220:2230,]
+# key_1[2020:2030,]</code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
@@ -193,10 +228,55 @@ head(key_1)
 <h1>Construct sample submission</h1>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuXG4jIGF2ZXJhZ2Ugb2YgbGFzdCAxMCBkYXlzIGZvciB0cmFpbiBkYXRhXG50cmFpbl8xJE1BXzEwIDwtIGFwcGx5KHRyYWluXzFbLDU0MDo1NTFdLCAxLCBtZWFuLCBuYS5ybSA9IFQpICMgbGFzdCB0ZW4gZGF5cyBNQVxuIyB0cmFpbl8xJE1BXzEwIDwtIHRyYWluXzFbLDU1MV0gIyBsYXN0IHZhbHVlXG5cbiMgdHJhaW5fMSAlPiVcbiMgICBzZWxlY3QoUGFnZSwgTUFfMTApICU+JVxuIyAgIGZpbHRlcihQYWdlID09IFwiXFxcIlxcXCJLZWVwX21lX2xvZ2dlZF9pblxcXCJcXFwiX2V4dGVuZGVkX3RvX29uZV95ZWFyX3d3dy5tZWRpYXdpa2kub3JnX2FsbC1hY2Nlc3NfYWxsLWFnZW50c1wiKVxuXG50cmFpbl8yIDwtIHRyYWluXzEgJT4lXG4gIHNlbGVjdChQYWdlLCBNQV8xMClcblxuIyBoZWFkKHRyYWluXzIpXG5cbnRlc3Rfc3VibWlzc2lvbiA8LSBsZWZ0X2pvaW4oa2V5XzIsIHRyYWluXzIsIGJ5ID0gXCJQYWdlXCIpXG4jIGhlYWQodGVzdF9zdWJtaXNzaW9uKVxuIyBoZWFkKHNhbXBsZV9zdWJtaXNzaW9uXzEpXG5cbnN1Ym1pc3Npb24xIDwtIHRlc3Rfc3VibWlzc2lvbiAlPiVcbiAgbXV0YXRlKE1BXzEwID0gY2VpbGluZyhNQV8xMCkpICU+JVxuICByZW5hbWUoVmlzaXRzID0gTUFfMTApICU+JVxuICBzZWxlY3QoSWQsIFZpc2l0cykgJT4lXG4gIG11dGF0ZShWaXNpdHMgPSBpZmVsc2UoaXMubmEoVmlzaXRzKSwgMCwgVmlzaXRzKSkgJT4lXG4gIG11dGF0ZShWaXNpdHMgPSBhcy5pbnRlZ2VyKFZpc2l0cykpXG5cbndyaXRlX2NzdihzdWJtaXNzaW9uMSwgXCJvdXRwdXQva2V5LmNzdlwiKVxuXG5cbiMgaGVhZChzdWJtaXNzaW9uMSlcbiMgaGVhZChzYW1wbGVfc3VibWlzc2lvbl8xKVxuXG4jIGhlYWQodGVzdF9zdWJtaXNzaW9uLCAxMDAwKVxuIyB0cmFpbl8xWyxjKDEsNTUxKV1cbiMgXG4jIHRyYWluXzFbdHJhaW5fMSRQYWdlID09IFwiLmNhX3J1Lndpa2lwZWRpYS5vcmdfZGVza3RvcF9hbGwtYWdlbnRzXCJdWyxjKDEsNTQwOjU1MildXG5cbnN1Ym1pc3Npb24xICU+JVxuICBmaWx0ZXIoVmlzaXRzIDw9IDEwMCkgJT4lXG4gIGdncGxvdChhZXMoVmlzaXRzKSkgK1xuICAgIGdlb21faGlzdG9ncmFtKClcblxuIyBtZWFuKGMoMSwyLDMsNCxOQSksIG5hLnJtID0gVClcblxuYGBgIn0= -->
+<pre class="r"><code>
+# average of last 10 days for train data
+train_1$MA_10 &lt;- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
+# train_1$MA_10 &lt;- train_1[,551] # last value
+
+# train_1 %&gt;%
+#   select(Page, MA_10) %&gt;%
+#   filter(Page == &quot;\&quot;\&quot;Keep_me_logged_in\&quot;\&quot;_extended_to_one_year_www.mediawiki.org_all-access_all-agents&quot;)
+
+train_2 &lt;- train_1 %&gt;%
+  select(Page, MA_10)
+
+# head(train_2)
+
+test_submission &lt;- left_join(key_2, train_2, by = &quot;Page&quot;)
+# head(test_submission)
+# head(sample_submission_1)
+
+submission1 &lt;- test_submission %&gt;%
+  mutate(MA_10 = ceiling(MA_10)) %&gt;%
+  rename(Visits = MA_10) %&gt;%
+  select(Id, Visits) %&gt;%
+  mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %&gt;%
+  mutate(Visits = as.integer(Visits))
+
+write_csv(submission1, &quot;output/key.csv&quot;)
+
+
+# head(submission1)
+# head(sample_submission_1)
+
+# head(test_submission, 1000)
+# train_1[,c(1,551)]
+# 
+# train_1[train_1$Page == &quot;.ca_ru.wikipedia.org_desktop_all-agents&quot;][,c(1,540:552)]
+
+submission1 %&gt;%
+  filter(Visits &lt;= 100) %&gt;%
+  ggplot(aes(Visits)) +
+    geom_histogram()
+
+# mean(c(1,2,3,4,NA), na.rm = T)
+</code></pre>
+<!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
 </div>
 
-<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmV2aWV3aW5nIGRhdGEiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KCiMgTG9hZCBkYXRhCgpgYGB7cn0KbGlicmFyeShkYXRhLnRhYmxlKQoKdHJhaW5fMSA8LSBmcmVhZCgiZGF0YS90cmFpbl8xLmNzdiIsIGhlYWRlciA9IFQpCmtleV8xIDwtIGZyZWFkKCJkYXRhL2tleV8xLmNzdiIsIGhlYWRlciA9IFQpCnNhbXBsZV9zdWJtaXNzaW9uXzEgPC0gZnJlYWQoImRhdGEvc2FtcGxlX3N1Ym1pc3Npb25fMS5jc3YiLCBoZWFkZXIgPSBUKQoKaGVhZChrZXlfMSkKCmBgYAoKIyBDb25zdHJ1Y3Qgc2FtcGxlIHN1Ym1pc3Npb24KCmBgYHtyfQoKCgpgYGA=</div>
+<div id="rmd-source-code">LS0tCnRpdGxlOiAiUmV2aWV3aW5nIGRhdGEiCm91dHB1dDogaHRtbF9ub3RlYm9vawotLS0KCiMgTG9hZCBsaWJyYXJpZXMKYGBge3J9CmxpYnJhcnkodGlkeXZlcnNlKQpsaWJyYXJ5KHN0cmluZ3IpCmxpYnJhcnkobHVicmlkYXRlKQoKYGBgCgojIExvYWQgZGF0YQoKYGBge3J9CmxpYnJhcnkoZGF0YS50YWJsZSkKCnRyYWluXzEgPC0gZnJlYWQoImRhdGEvdHJhaW5fMS5jc3YiLCBoZWFkZXIgPSBUKQprZXlfMSA8LSBmcmVhZCgiZGF0YS9rZXlfMS5jc3YiLCBoZWFkZXIgPSBUKQpzYW1wbGVfc3VibWlzc2lvbl8xIDwtIGZyZWFkKCJkYXRhL3NhbXBsZV9zdWJtaXNzaW9uXzEuY3N2IiwgaGVhZGVyID0gVCkKCiMgaGVhZChzYW1wbGVfc3VibWlzc2lvbl8xLCAxMCkKIyBoZWFkKGtleV8xLCAxMCkKIyBoZWFkKHRyYWluXzFbLDU1MV0sIDEwKQoKYGBgCgojIFNwbGl0IGtleQoKYGBge3J9CmtleV8yIDwtIGtleV8xICU+JQogIHNlcGFyYXRlKFBhZ2UsIGMoIlBhZ2UiLCAiRGF0ZSIpLCBzZXAgPSAtMTEpICU+JQogIG11dGF0ZShQYWdlID0gc3RyX3N1YihQYWdlLCAxLCAtMikpCgojICAgbXV0YXRlKE90aGVyID0gc3RyX3N1YihPdGhlciwgMikpICU+JQojICAgbXV0YXRlKExhbmcgPSBzdHJfc3ViKExhbmcsIDEsIC0yKSkgJT4lCiMgICBzZXBhcmF0ZShPdGhlciwgYygiZGV2aWNlIiwgImFnZW50IiwgImRhdGUiKSwgc2VwID0gIl8iKSAlPiUKIyAgIG11dGF0ZShUb3BpYyA9IHN0cl9zdWIoVG9waWMsIDEsIC0yKSkgJT4lCiMgICBtdXRhdGUoZGF0ZSA9IGFzLlBPU0lYY3QoZGF0ZSkpCiMgCiMga2V5XzFbMjIyMDoyMjMwLF0KIyBrZXlfMVsyMDIwOjIwMzAsXQoKYGBgCgojIENvbnN0cnVjdCBzYW1wbGUgc3VibWlzc2lvbgoKYGBge3J9CgojIGF2ZXJhZ2Ugb2YgbGFzdCAxMCBkYXlzIGZvciB0cmFpbiBkYXRhCnRyYWluXzEkTUFfMTAgPC0gYXBwbHkodHJhaW5fMVssNTQwOjU1MV0sIDEsIG1lYW4sIG5hLnJtID0gVCkgIyBsYXN0IHRlbiBkYXlzIE1BCiMgdHJhaW5fMSRNQV8xMCA8LSB0cmFpbl8xWyw1NTFdICMgbGFzdCB2YWx1ZQoKIyB0cmFpbl8xICU+JQojICAgc2VsZWN0KFBhZ2UsIE1BXzEwKSAlPiUKIyAgIGZpbHRlcihQYWdlID09ICJcIlwiS2VlcF9tZV9sb2dnZWRfaW5cIlwiX2V4dGVuZGVkX3RvX29uZV95ZWFyX3d3dy5tZWRpYXdpa2kub3JnX2FsbC1hY2Nlc3NfYWxsLWFnZW50cyIpCgp0cmFpbl8yIDwtIHRyYWluXzEgJT4lCiAgc2VsZWN0KFBhZ2UsIE1BXzEwKQoKIyBoZWFkKHRyYWluXzIpCgp0ZXN0X3N1Ym1pc3Npb24gPC0gbGVmdF9qb2luKGtleV8yLCB0cmFpbl8yLCBieSA9ICJQYWdlIikKIyBoZWFkKHRlc3Rfc3VibWlzc2lvbikKIyBoZWFkKHNhbXBsZV9zdWJtaXNzaW9uXzEpCgpzdWJtaXNzaW9uMSA8LSB0ZXN0X3N1Ym1pc3Npb24gJT4lCiAgbXV0YXRlKE1BXzEwID0gY2VpbGluZyhNQV8xMCkpICU+JQogIHJlbmFtZShWaXNpdHMgPSBNQV8xMCkgJT4lCiAgc2VsZWN0KElkLCBWaXNpdHMpICU+JQogIG11dGF0ZShWaXNpdHMgPSBpZmVsc2UoaXMubmEoVmlzaXRzKSwgMCwgVmlzaXRzKSkgJT4lCiAgbXV0YXRlKFZpc2l0cyA9IGFzLmludGVnZXIoVmlzaXRzKSkKCndyaXRlX2NzdihzdWJtaXNzaW9uMSwgIm91dHB1dC9rZXkuY3N2IikKCgojIGhlYWQoc3VibWlzc2lvbjEpCiMgaGVhZChzYW1wbGVfc3VibWlzc2lvbl8xKQoKIyBoZWFkKHRlc3Rfc3VibWlzc2lvbiwgMTAwMCkKIyB0cmFpbl8xWyxjKDEsNTUxKV0KIyAKIyB0cmFpbl8xW3RyYWluXzEkUGFnZSA9PSAiLmNhX3J1Lndpa2lwZWRpYS5vcmdfZGVza3RvcF9hbGwtYWdlbnRzIl1bLGMoMSw1NDA6NTUyKV0KCnN1Ym1pc3Npb24xICU+JQogIGZpbHRlcihWaXNpdHMgPD0gMTAwKSAlPiUKICBnZ3Bsb3QoYWVzKFZpc2l0cykpICsKICAgIGdlb21faGlzdG9ncmFtKCkKCiMgbWVhbihjKDEsMiwzLDQsTkEpLCBuYS5ybSA9IFQpCgpgYGA=</div>
 
 
 

@@ -3,6 +3,14 @@ title: "Reviewing data"
 output: html_notebook
 ---
 
+# Load libraries
+```{r}
+library(tidyverse)
+library(stringr)
+library(lubridate)
+
+```
+
 # Load data
 
 ```{r}
@@ -12,7 +20,27 @@ train_1 <- fread("data/train_1.csv", header = T)
 key_1 <- fread("data/key_1.csv", header = T)
 sample_submission_1 <- fread("data/sample_submission_1.csv", header = T)
 
-head(key_1)
+# head(sample_submission_1, 10)
+# head(key_1, 10)
+# head(train_1[,551], 10)
+
+```
+
+# Split key
+
+```{r}
+key_2 <- key_1 %>%
+  separate(Page, c("Page", "Date"), sep = -11) %>%
+  mutate(Page = str_sub(Page, 1, -2))
+
+#   mutate(Other = str_sub(Other, 2)) %>%
+#   mutate(Lang = str_sub(Lang, 1, -2)) %>%
+#   separate(Other, c("device", "agent", "date"), sep = "_") %>%
+#   mutate(Topic = str_sub(Topic, 1, -2)) %>%
+#   mutate(date = as.POSIXct(date))
+# 
+# key_1[2220:2230,]
+# key_1[2020:2030,]
 
 ```
 
@@ -20,6 +48,46 @@ head(key_1)
 
 ```{r}
 
+# average of last 10 days for train data
+train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
+# train_1$MA_10 <- train_1[,551] # last value
 
+# train_1 %>%
+#   select(Page, MA_10) %>%
+#   filter(Page == "\"\"Keep_me_logged_in\"\"_extended_to_one_year_www.mediawiki.org_all-access_all-agents")
+
+train_2 <- train_1 %>%
+  select(Page, MA_10)
+
+# head(train_2)
+
+test_submission <- left_join(key_2, train_2, by = "Page")
+# head(test_submission)
+# head(sample_submission_1)
+
+submission1 <- test_submission %>%
+  mutate(MA_10 = ceiling(MA_10)) %>%
+  rename(Visits = MA_10) %>%
+  select(Id, Visits) %>%
+  mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %>%
+  mutate(Visits = as.integer(Visits))
+
+write_csv(submission1, "output/key.csv")
+
+
+# head(submission1)
+# head(sample_submission_1)
+
+# head(test_submission, 1000)
+# train_1[,c(1,551)]
+# 
+# train_1[train_1$Page == ".ca_ru.wikipedia.org_desktop_all-agents"][,c(1,540:552)]
+
+submission1 %>%
+  filter(Visits <= 100) %>%
+  ggplot(aes(Visits)) +
+    geom_histogram()
+
+# mean(c(1,2,3,4,NA), na.rm = T)
 
 ```
