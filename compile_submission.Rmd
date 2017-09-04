@@ -28,79 +28,14 @@ sample_submission_1 <- fread("data/sample_submission_1.csv", header = T, encodin
 
 ```
 
-# Extract one series and experiment
-
-```{r}
-rm(list = ls())
-
-train_1 <- fread("data/train_1.csv", header = T, encoding = "UTF-8")
-
-carrie_f_test <- train_1 %>%
-  # arrange(desc(`2016-12-31`)) %>%
-  filter(Page == "Carrie_Fisher_en.wikipedia.org_all-access_all-agents") %>%
-  gather(-Page, key = Date, value = Visits) %>%
-  mutate(Date = as.Date(Date))
-
-rm(train_1)
-```
-```{r}
-
-# basic regression trend
-carrie_trend <- lm(Visits ~ Date, data = carrie_f_test)
-
-# Plot trends and data
-carrie_f_test %>%
-  ggplot(aes(x = Date, y = Visits)) + geom_line() + geom_hline(yintercept = mean(carrie_f_test$Visits), colour = "blue") + geom_abline(slope = 1.835e+02, intercept = -3.067e+06, colour = "red")
-
-# create predicted dates vector
-pred_dates <- rep(carrie_f_test$Date[550], 60) + seq(from = 1, to = 60, by = 1)
-
-# predict visits
-## predict trend
-pred_visits_trend <- ceiling(predict.lm(carrie_trend, newdata = data.frame(Date = pred_dates)))
-
-## final value
-last_observed_value <- carrie_f_test$Visits[nrow(carrie_f_test)]
-
-## predict trend correction
-correction_length <- 10
-pred_correction <- numeric(correction_length)
-pred_correction[1] <- (last_observed_value - pred_visits_trend[1]) / 2
-for (i in 2:correction_length){
-  last_observed_value <- pred_visits_trend[i-1] + pred_correction[i-1]   
-  pred_correction[i] <- (last_observed_value - pred_visits_trend[i]) / 2
-}
-
-## add correction to trend
-pred_visits <- numeric(60)
-pred_visits <- pred_visits_trend[1:length(pred_visits_trend)]
-pred_visits[1:correction_length] <- pred_visits_trend[1:correction_length] + pred_correction
-
-
-# add predictions to data
-carrie_predictions <- data.frame(Page = rep(carrie_f_test$Page[1], 60),
-                                 Date = pred_dates,
-                                 Visits = pred_visits)
-
-carrie_combined <- rbind(carrie_f_test, carrie_predictions)
-
-# Plot prediction
-carrie_combined %>%
-  ggplot(aes(x = Date, y = Visits)) +
-    geom_line() +
-    geom_vline(xintercept = as.numeric(carrie_combined$Date[551]), colour = "blue", linetype = 2)
-
-
-
-```
-
-
 # Split key
 
 ```{r}
 key_sep <- key_1 %>%
   separate(Page, c("Page", "Date"), sep = -11) %>%
   mutate(Page = str_sub(Page, 1, -2))
+```
+```{r, eval=F}
 
 # Test page occurence in Train data
 
@@ -131,6 +66,7 @@ print(train_zh_sample[1,]$Page)
 ```
 
 # Construct sample submission
+## Basic 10 day MA
 
 ```{r}
 
@@ -158,7 +94,7 @@ submission1 <- test_submission %>%
   mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %>%
   mutate(Visits = as.integer(Visits))
 
-write_csv(submission1, "output/key.csv")
+write_csv(submission1, "output/170903_1_key.csv")
 
 
 # head(submission1)
@@ -170,7 +106,7 @@ write_csv(submission1, "output/key.csv")
 # train_1[train_1$Page == ".ca_ru.wikipedia.org_desktop_all-agents"][,c(1,540:552)]
 ```
 
-```{r}
+```{r, eval=F}
 submission1 %>%
   filter(Visits <= 50) %>%
   ggplot(aes(Visits)) +

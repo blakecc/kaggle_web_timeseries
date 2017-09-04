@@ -1,0 +1,91 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
+
+# Load libraries
+```{r}
+library(tidyverse)
+library(stringr)
+library(lubridate)
+library(data.table)
+
+```
+
+# Extract one series and experiment
+
+```{r}
+rm(list = ls())
+
+train_1 <- fread("data/train_1.csv", header = T, encoding = "UTF-8")
+
+carrie_f_test <- train_1 %>%
+  # arrange(desc(`2016-12-31`)) %>%
+  filter(Page == "Carrie_Fisher_en.wikipedia.org_all-access_all-agents") %>%
+  gather(-Page, key = Date, value = Visits) %>%
+  mutate(Date = as.Date(Date))
+
+rm(train_1)
+```
+```{r}
+
+# basic regression trend
+carrie_trend <- lm(Visits ~ Date, data = carrie_f_test)
+
+# Plot trends and data
+carrie_f_test %>%
+  ggplot(aes(x = Date, y = Visits)) + geom_line() + geom_hline(yintercept = mean(carrie_f_test$Visits), colour = "blue") + geom_abline(slope = 1.835e+02, intercept = -3.067e+06, colour = "red")
+
+# create predicted dates vector
+pred_dates <- rep(carrie_f_test$Date[550], 60) + seq(from = 1, to = 60, by = 1)
+
+# predict visits
+## predict trend
+pred_visits_trend <- ceiling(predict.lm(carrie_trend, newdata = data.frame(Date = pred_dates)))
+
+## final value
+last_observed_value <- carrie_f_test$Visits[nrow(carrie_f_test)]
+
+## predict trend correction
+correction_length <- 10
+pred_correction <- numeric(correction_length)
+pred_correction[1] <- (last_observed_value - pred_visits_trend[1]) / 2
+for (i in 2:correction_length){
+  last_observed_value <- pred_visits_trend[i-1] + pred_correction[i-1]   
+  pred_correction[i] <- (last_observed_value - pred_visits_trend[i]) / 2
+}
+
+## add correction to trend
+pred_visits <- numeric(60)
+pred_visits <- pred_visits_trend[1:length(pred_visits_trend)]
+pred_visits[1:correction_length] <- pred_visits_trend[1:correction_length] + pred_correction
+
+
+# add predictions to data
+carrie_predictions <- data.frame(Page = rep(carrie_f_test$Page[1], 60),
+                                 Date = pred_dates,
+                                 Visits = pred_visits)
+
+carrie_combined <- rbind(carrie_f_test, carrie_predictions)
+
+# Plot prediction
+carrie_combined %>%
+  ggplot(aes(x = Date, y = Visits)) +
+    geom_line() +
+    geom_vline(xintercept = as.numeric(carrie_combined$Date[551]), colour = "blue", linetype = 2)
+
+
+
+```
