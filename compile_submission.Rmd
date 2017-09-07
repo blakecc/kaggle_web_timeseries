@@ -8,13 +8,13 @@ output: html_notebook
 library(tidyverse)
 library(stringr)
 library(lubridate)
+library(data.table)
 
 ```
 
 # Load data
 
 ```{r}
-library(data.table)
 
 rm(list = ls())
 
@@ -71,7 +71,8 @@ print(train_zh_sample[1,]$Page)
 ```{r}
 
 # average of last 10 days for train data
-train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
+# train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
+train_1$MA_60 <- apply(train_1[,490:551], 1, mean, na.rm = T) # last ten days MA
 # train_1$MA_10 <- train_1[,551] # last value
 
 # train_1 %>%
@@ -79,7 +80,7 @@ train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
 #   filter(Page == "\"\"Keep_me_logged_in\"\"_extended_to_one_year_www.mediawiki.org_all-access_all-agents")
 
 train_2 <- train_1 %>%
-  select(Page, MA_10)
+  select(Page, MA_60)
 
 # head(train_2)
 
@@ -88,13 +89,13 @@ test_submission <- left_join(key_sep, train_2, by = "Page")
 # head(sample_submission_1)
 
 submission1 <- test_submission %>%
-  mutate(MA_10 = ceiling(MA_10)) %>%
-  rename(Visits = MA_10) %>%
+  mutate(MA_10 = ceiling(MA_60)) %>%
+  rename(Visits = MA_60) %>%
   select(Id, Visits) %>%
   mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %>%
   mutate(Visits = as.integer(Visits))
 
-write_csv(submission1, "output/170903_1_key.csv")
+write_csv(submission1, "output/170904_1_key.csv")
 
 
 # head(submission1)
@@ -113,5 +114,27 @@ submission1 %>%
     geom_histogram(bins = 50)
 
 # mean(c(1,2,3,4,NA), na.rm = T)
+
+```
+
+# Using predict_1
+
+```{r}
+rm(list = ls())
+
+train_1 <- fread("data/train_1.csv", header = T, encoding = "UTF-8")
+
+source("R/helpers.R")
+
+page_data_1 <- train_1 %>% slice(1)
+
+submission_test <- predict_1(page_data_1)
+
+for (i in 2:nrow(train_1)){
+  print(i)
+  page_data_1 <- train_1 %>% slice(i)
+  predict_output <- suppressWarnings(predict_1(page_data_1))
+  submission_test <- rbind(submission_test, predict_output)
+}
 
 ```

@@ -3,18 +3,6 @@ title: "R Notebook"
 output: html_notebook
 ---
 
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Cmd+Shift+Enter*. 
-
-```{r}
-plot(cars)
-```
-
-Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Cmd+Option+I*.
-
-When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Cmd+Shift+K* to preview the HTML file).
-
 # Load libraries
 ```{r}
 library(tidyverse)
@@ -24,12 +12,12 @@ library(data.table)
 
 ```
 
-# Extract one series and experiment
+# Extract one series and experiment (Carrie Fisher)
 
 ```{r}
 rm(list = ls())
 
-train_1 <- fread("data/train_1.csv", header = T, encoding = "UTF-8")
+train_1 <- fread("../data/train_1.csv", header = T, encoding = "UTF-8")
 
 carrie_f_test <- train_1 %>%
   # arrange(desc(`2016-12-31`)) %>%
@@ -85,6 +73,480 @@ carrie_combined %>%
   ggplot(aes(x = Date, y = Visits)) +
     geom_line() +
     geom_vline(xintercept = as.numeric(carrie_combined$Date[551]), colour = "blue", linetype = 2)
+
+```
+
+# Try to apply to more than 1 series
+```{r}
+train_1 <- fread("../data/train_1.csv", header = T, encoding = "UTF-8")
+
+# train_1$overall_mean <- apply(train_1[,2:ncol(train_1)], 1, mean, na.rm = T)
+
+# train_1 %>%
+#   # rowwise() %>%
+#   # mutate(overall_mean = rowMeans(c(colnames(train_1)[2:ncol(train_1)], na.rm = T))) %>%
+#   select(Page, overall_mean, everything()) %>%
+#   arrange(desc(overall_mean))
+# 
+# c(colnames(train_1)[2:ncol(train_1)])
+# 
+# 
+# head(train_1, 20)
+
+multi_test <- train_1 %>%
+  # arrange(desc(`2016-12-31`)) %>%
+  filter(Page == "Carrie_Fisher_en.wikipedia.org_all-access_all-agents" |
+           Page == "Donald_Trump_en.wikipedia.org_all-access_all-agents" |
+           Page == "Mannequin_Challenge_en.wikipedia.org_all-access_all-agents" |
+           Page == "Game_of_Thrones_en.wikipedia.org_all-access_all-agents") %>%
+  gather(-Page, key = Date, value = Visits) %>%
+  mutate(Date = as.Date(Date))
+
+rm(train_1)
+
+```
+# Dates
+
+```{r}
+page_data <- multi_test %>% filter(Page == "Donald_Trump_en.wikipedia.org_all-access_all-agents")
+
+pred_dates <- rep(page_data$Date[550], 60) + seq(from = 1, to = 60, by = 1)
+```
+
+# Weekday seasonality
+
+```{r}
+page_data$weekday <- as.factor(weekdays(page_data$Date))
+
+### weekly MA
+ma_lag <- 7
+# week_ma <- numeric(length(page_data$Visits))
+week_ma <- rep(NA, length(page_data$Visits))
+for (i in 1:ma_lag){
+  # week_ma <- rowSums(cbind(week_ma, lag(page_data$Visits, i)), na.rm = T)
+  week_ma <- cbind(week_ma, lag(page_data$Visits, i))
+}
+page_data$week_ma <- rowMeans(week_ma, na.rm = T)
+
+page_data <- page_data %>%
+  mutate(weekday_var = Visits - week_ma)
+
+### 60 day MA
+ma_lag <- 60
+# week_ma <- numeric(length(page_data$Visits))
+pred_period_ma <- rep(NA, length(page_data$Visits))
+for (i in 1:ma_lag){
+  # week_ma <- rowSums(cbind(week_ma, lag(page_data$Visits, i)), na.rm = T)
+  pred_period_ma <- cbind(pred_period_ma, lag(page_data$Visits, i))
+}
+page_data$pred_period_ma <- rowMeans(pred_period_ma, na.rm = T)
+
+### Lag 1 of visits
+page_data$Visits_lag1 <- lag(page_data$Visits, 1)
+
+### Lag 2 of visits
+page_data$Visits_lag2 <- lag(page_data$Visits, 2)
+
+### Lag 8 of visits
+page_data$Visits_lag8 <- lag(page_data$Visits, 8)
+
+### Daily rate of change
+page_data$Daily_rateOC <- (page_data$Visits_lag1 / page_data$Visits_lag2)^(1/(1/365)) - 1
+
+### Weekly rate of change
+page_data$Weekly_rateOC <- (page_data$Visits_lag1 / page_data$Visits_lag8)^(1/(7/365)) - 1
+
+### Lag 60 variable
+page_data$Visits_lag61 <- lag(page_data$Visits, 61)
+
+### Bimonthly rate of change
+page_data$Bimonthly_rateOC <- (page_data$Visits_lag1 / page_data$Visits_lag61)^(1/(60/365)) - 1
+
+### Lag 1 of 60 day MA
+# page_data$pred_period_ma_lag1 <- lag(page_data$pred_period_ma, 1)
+
+### Lag 61 of 60 day MA
+page_data$pred_period_ma_lag60 <- lag(page_data$pred_period_ma, 60)
+
+### Bimonthly rate of change of pred period ma
+page_data$Bimonthly_rateOC_pred_period <- (page_data$pred_period_ma / page_data$pred_period_ma_lag60)^(1/(60/365)) - 1 # no negative values, so can use fractional exponents
+# summary(page_data$Bimonthly_rateOC_pred_period + 1)
+
+### Weekly rate of change of bimonthly rate of change
+page_data$Weekly_rateOC_bimonthly_rateOC <- log(abs(((page_data$Bimonthly_rateOC_pred_period + 1) / lag(page_data$Bimonthly_rateOC_pred_period + 1, 7))^(1/(7/365)) - 1)) # use ceiling if neg values
+
+page_data$Weekly_rateOC_bimonthly_rateOC_sign <- as.factor(sign(page_data$Weekly_rateOC_bimonthly_rateOC))
+
+# temp_weekly2d <- log(abs(page_data$Weekly_rateOC_bimonthly_rateOC))
+
+# plot(temp_weekly2d, type = "l")
+
+
+# Plot prediction
+# page_data %>%
+#   ggplot() +
+#     # geom_line(aes(x = Date, y = Visits)) +
+#     # geom_line(aes(x = Date, y = week_ma), colour = "red") +
+#     geom_line(aes(x = Date, y = Visits), colour = "blue")
+
+weekday_model <- lm(weekday_var ~ weekday:I(Visits_lag1^3) + I(week_ma^2) + week_ma + log(week_ma) + Bimonthly_rateOC, data = page_data)
+
+summary(weekday_model)
+
+pred_visits_weekday_movements <- ceiling(predict.lm(weekday_model,
+                                                    newdata = data.frame(weekday = weekdays(pred_dates),
+                                                                         week_ma = rep(page_data$week_ma[nrow(page_data)], length(pred_dates)),
+                                                                         pred_period_ma = rep(page_data$pred_period_ma[nrow(page_data)], length(pred_dates)),
+                                                                         Visits_lag1 = rep(page_data$Visits_lag1[nrow(page_data)], length(pred_dates)),
+                                                                         Visits_lag2 = rep(page_data$Visits_lag2[nrow(page_data)], length(pred_dates)),
+                                                                         Daily_rateOC = rep(page_data$Daily_rateOC[nrow(page_data)], length(pred_dates)),
+                                                                         Weekly_rateOC = rep(page_data$Weekly_rateOC[nrow(page_data)], length(pred_dates)),
+                                                                         Bimonthly_rateOC = rep(page_data$Bimonthly_rateOC[nrow(page_data)], length(pred_dates)),
+                                                                         Bimonthly_rateOC_pred_period = rep(page_data$Bimonthly_rateOC[nrow(page_data)], length(pred_dates)),
+                                                                         Weekly_rateOC_bimonthly_rateOC = rep(page_data$Weekly_rateOC_bimonthly_rateOC[nrow(page_data)], length(pred_dates)))))
+
+```
+
+
+# Monthly seasonality
+
+```{r}
+page_data$month <- as.factor(months(page_data$Date))
+
+### yearly MA
+ma_lag <- 365
+# week_ma <- numeric(length(page_data$Visits))
+year_ma <- rep(NA, length(page_data$Visits))
+for (i in 1:ma_lag){
+  # week_ma <- rowSums(cbind(week_ma, lag(page_data$Visits, i)), na.rm = T)
+  year_ma <- cbind(year_ma, lag(page_data$Visits, i))
+}
+page_data$year_ma <- rowMeans(year_ma, na.rm = T)
+
+page_data <- page_data %>%
+  select(Visits_lag1, month) %>%
+  group_by(month) %>%
+  summarise(month_mean = mean(Visits_lag1, na.rm = T)) %>%
+  right_join(page_data, by = "month")
+
+page_data <- page_data %>%
+  mutate(month_var = month_mean - year_ma)
+
+
+month_model <- lm(month_var ~ month:year_ma + year_ma, data = page_data)
+
+summary(month_model)
+
+page_data$predicted_month_var[2:nrow(page_data)] <- predict.lm(month_model)
+
+# Plot prediction
+page_data %>%
+  ggplot() +
+    geom_line(aes(x = Date, y = year_ma), colour = "black") +
+    geom_line(aes(x = Date, y = predicted_month_var), colour = "red") +
+    geom_line(aes(x = Date, y = month_var), colour = "blue")
+
+
+
+pred_visits_month_movements <- ceiling(predict.lm(month_model,
+                                                    newdata = data.frame(month = months(pred_dates),
+                                                                         year_ma = rep(page_data$year_ma[nrow(page_data)], length(pred_dates)))))
+
+```
+
+
+
+# Trend
+
+```{r}
+# trend
+page_trend <- lm(Visits ~ Date, data = page_data)
+# pred_visits_trend <- ceiling(predict.lm(page_trend, newdata = data.frame(Date = pred_dates)))
+ma_60 <- page_data %>%
+  filter(Date >= page_data$Date[nrow(page_data) - 60]) %>%
+  select(Visits) %>%
+  # filter(rank(Visits) <= 20) %>%
+  summarise(Mean = median(Visits, na.rm = T))
+ma_60 <- ceiling(ma_60$Mean)
+pred_visits_trend <- rep(ma_60, 60)
+```
+
+# Converge back to trend
+
+```{r}
+## final value
+last_observed_value <- page_data %>% select(Visits, Date) %>% filter(!is.na(Date), !is.na(Visits)) %>% arrange(desc(Date)) %>% slice(1) %>% .$Visits
+
+## predict trend correction
+
+correction_length <- ceiling(sd(page_data$Visits) / last_observed_value)
+pred_correction <- numeric(correction_length)
+pred_correction[1] <- (last_observed_value - pred_visits_trend[1]) / 2
+for (i in 2:correction_length){
+  last_observed_value <- pred_visits_trend[i-1] + pred_correction[i-1]   
+  pred_correction[i] <- (last_observed_value - pred_visits_trend[i]) / 2
+}
+```
+
+# Combine elements and plot
+
+```{r}
+## add correction to trend
+pred_visits <- numeric(60)
+pred_visits <- pred_visits_trend[1:length(pred_visits_trend)]
+pred_visits[1:correction_length] <- pred_visits_trend[1:correction_length] + pred_correction
+pred_visits <- rowSums(cbind(pred_visits, pred_visits_weekday_movements))
+
+
+# add predictions to data
+page_predictions <- data.frame(Page = rep(page_data$Page[1], 60),
+                                 Date = pred_dates,
+                                 Visits = pred_visits)
+
+page_combined <- rbind(page_data %>% select(Page, Date, Visits), page_predictions)
+
+# Plot prediction
+page_combined %>%
+  ggplot(aes(x = Date, y = Visits)) +
+    geom_line() +
+    geom_vline(xintercept = as.numeric(page_combined$Date[551]), colour = "blue", linetype = 2)
+
+
+```
+
+# Review of weekly
+
+```{r}
+
+page_combined_copy <- cbind(page_combined)
+
+page_combined_copy$weekday <- as.factor(weekdays(page_combined_copy$Date))
+
+### weekly MA
+ma_lag <- 7
+# week_ma <- numeric(length(page_data$Visits))
+week_ma <- rep(NA, length(page_combined_copy$Visits))
+for (i in 1:ma_lag){
+  # week_ma <- rowSums(cbind(week_ma, lag(page_data$Visits, i)), na.rm = T)
+  week_ma <- cbind(week_ma, lag(page_combined_copy$Visits, i))
+}
+page_combined_copy$week_ma <- rowMeans(week_ma, na.rm = T)
+
+page_combined_copy <- page_combined_copy %>%
+  mutate(weekday_var = Visits - week_ma)
+
+### 60 day MA
+ma_lag <- 60
+# week_ma <- numeric(length(page_data$Visits))
+pred_period_ma <- rep(NA, length(page_combined_copy$Visits))
+for (i in 1:ma_lag){
+  # week_ma <- rowSums(cbind(week_ma, lag(page_data$Visits, i)), na.rm = T)
+  pred_period_ma <- cbind(pred_period_ma, lag(page_combined_copy$Visits, i))
+}
+page_combined_copy$pred_period_ma <- rowMeans(pred_period_ma, na.rm = T)
+
+# Plot prediction
+# page_data %>%
+#   ggplot() +
+#     # geom_line(aes(x = Date, y = Visits)) +
+#     # geom_line(aes(x = Date, y = week_ma), colour = "red") +
+#     geom_line(aes(x = Date, y = weekday_var), colour = "blue")
+
+# weekday_model <- lm(weekday_var ~ weekday:week_ma, data = page_data)
+
+### Lag 1 of Visits
+page_combined_copy$Visits_lag1 <- lag(page_combined_copy$Visits, 1)
+
+### Lag 2 of visits
+page_combined_copy$Visits_lag2 <- lag(page_combined_copy$Visits, 2)
+
+### Daily rate of change
+page_combined_copy$Daily_rateOC <- (page_combined_copy$Visits_lag1 / page_combined_copy$Visits_lag2)^(1/(1/365)) - 1
+
+### Lag 8 of visits
+page_combined_copy$Visits_lag8 <- lag(page_combined_copy$Visits, 8)
+
+### Weekly rate of change
+page_combined_copy$Weekly_rateOC <- (page_combined_copy$Visits_lag1 / page_combined_copy$Visits_lag8)^(1/(7/365)) - 1
+
+### Lag 61 variable
+page_combined_copy$Visits_lag61 <- lag(page_combined_copy$Visits, 61)
+
+### Bimonthly rate of change
+page_combined_copy$Bimonthly_rateOC <- (page_combined_copy$Visits_lag1 / page_combined_copy$Visits_lag61)^(1/(60/365)) - 1
+
+### Lag 1 of 60 day MA
+# page_combined_copy$pred_period_ma_lag1 <- lag(page_combined_copy$pred_period_ma, 1)
+
+### Lag 61 of 60 day MA
+page_combined_copy$pred_period_ma_lag60 <- lag(page_combined_copy$pred_period_ma, 60)
+
+### Bimonthly rate of change of pred period ma
+page_combined_copy$Bimonthly_rateOC_pred_period <- (page_combined_copy$pred_period_ma / page_combined_copy$pred_period_ma_lag60)^(1/(60/365)) - 1
+
+
+# Plot prediction
+# page_data %>%
+#   ggplot() +
+#     # geom_line(aes(x = Date, y = Visits)) +
+#     # geom_line(aes(x = Date, y = week_ma), colour = "red") +
+#     geom_line(aes(x = Date, y = weekday_var), colour = "blue")
+
+weekday_model <- lm(weekday_var ~ weekday:I(Visits_lag1^3) + I(week_ma^2) + week_ma + log(week_ma) + Bimonthly_rateOC, data = page_data)
+
+summary(weekday_model)
+
+
+test_seasonality <- ceiling(predict.lm(weekday_model, newdata = page_combined_copy))
+
+page_combined_copy$predicted_seasonality <- test_seasonality
+
+ggplot(data = page_combined_copy) +
+  geom_line(aes(x = Date, y = week_ma), colour = "black") +
+  geom_line(aes(x = Date, y = pred_period_ma), colour = "black", linetype = 2) +
+  geom_line(aes(x = Date, y = weekday_var), colour = "blue") +
+  geom_line(aes(x = Date, y = predicted_seasonality), colour = "red") +
+  geom_line(aes(x = Date, y = Bimonthly_rateOC_pred_period*100), colour = "green")
+
+```
+
+
+# Streamline
+
+```{r}
+
+rm(list = ls())
+
+train_1 <- fread("../data/train_1.csv", header = T, encoding = "UTF-8")
+
+predict_1 <- function(page_data){
+  ##########
+  page_data <- page_data_1 %>% gather(-Page, key = Date, value = Visits) %>% mutate(Date = as.Date(Date))
+  
+  ######
+  # page_data$Visits
+  #####
+  
+  pred_dates <- rep(page_data$Date[550], 60) + seq(from = 1, to = 60, by = 1)
+  
+  if(sum(is.na(page_data$Visits)) >= 550){
+    pred_visits <- rep(0, length(pred_dates))
+  } else if (sum(is.na(page_data$Visits)) >= 530){
+    pred_visits <- rep(round(mean(page_data$Visits, na.rm = T),0), length(pred_dates))
+  } else if (sum(is.na(page_data$Visits)) + sum(page_data$Visits == 0, na.rm = T) >= 530){
+    pred_visits <- rep(round(mean(page_data$Visits, na.rm = T),0), length(pred_dates))
+  } else if (sum(is.na(page_data$Visits[(length(page_data$Visits) - 10):length(page_data$Visits)])) >= 9){
+    pred_visits <- rep(0, length(pred_dates))
+  } else {
+    ###########
+    
+    page_data$weekday <- as.factor(weekdays(page_data$Date))
+    
+    # 7 day MA
+    ma_lag <- 7
+    week_ma <- rep(NA, length(page_data$Visits))
+    for (i in 1:ma_lag){
+      week_ma <- cbind(week_ma, lag(page_data$Visits, i))
+    }
+    page_data$week_ma <- ceiling(rowMeans(week_ma, na.rm = T) + 1) #ensure no log error in lm function
+    
+    page_data <- page_data %>%
+      mutate(weekday_var = Visits - week_ma)
+    
+    ### Lag 1 of visits
+    page_data$Visits_lag1 <- lag(page_data$Visits, 1)
+    
+    ### Lag 61 of visits
+    page_data$Visits_lag61 <- lag(page_data$Visits, 61)
+    
+    ### Bimonthly rate of change
+    page_data$Bimonthly_rateOC <- ((page_data$Visits_lag1 + 1) / (page_data$Visits_lag61 + 1))^(1/(60/365)) - 1
+    
+    if (sum(is.na(page_data$Bimonthly_rateOC[(length(page_data$Bimonthly_rateOC) - 10):length(page_data$Bimonthly_rateOC)])) >= 10){
+      page_data$Bimonthly_rateOC <- rep(0, length(page_data$Visits))
+    }
+    
+    weekday_model <- lm(weekday_var ~ weekday:I(Visits_lag1^3) + I(week_ma^2) + week_ma + log(week_ma) + Bimonthly_rateOC, data = page_data, na.action = na.omit)
+    # summary(weekday_model)
+    
+    
+    pred_visits_weekday_movements <-
+      try(ceiling(predict.lm(weekday_model,
+                         newdata = data.frame(weekday = weekdays(pred_dates),
+                                              week_ma = rep(page_data$week_ma[nrow(page_data)], length(pred_dates)),
+                                              Visits_lag1 = rep(page_data$Visits_lag1[nrow(page_data)], length(pred_dates)),
+                                              Bimonthly_rateOC = rep(page_data$Bimonthly_rateOC[nrow(page_data)], length(pred_dates))))), TRUE)
+    
+    if (class(pred_visits_weekday_movements) == "try-error"){
+      pred_visits_weekday_movements <- rep(0, 60)
+    } else if (is.na(mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)))) {
+      pred_visits_weekday_movements <- pred_visits_weekday_movements
+    } else if (mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)) >= 0.5 ){
+      pred_visits_weekday_movements <- ceiling(pred_visits_weekday_movements - mean(pred_visits_weekday_movements))
+    } 
+    
+    
+    ###############
+    
+    ma_60 <- page_data %>%
+      filter(Date >= page_data$Date[nrow(page_data) - 60]) %>%
+      select(Visits) %>%
+      # filter(rank(Visits) <= 20) %>%
+      summarise(Mean = median(Visits, na.rm = T))
+    ma_60 <- ceiling(ma_60$Mean)
+    pred_visits_trend <- rep(ma_60, 60)
+    
+    #########
+    
+    ## final value
+    last_observed_value <- page_data %>% select(Visits, Date) %>% filter(!is.na(Date), !is.na(Visits)) %>% arrange(desc(Date)) %>% slice(1) %>% .$Visits
+    
+    ## predict trend correction
+    correction_length <- min(max(ceiling(sd(page_data$Visits[(length(page_data$Visits) - 60):length(page_data$Visits)], na.rm = T) / (last_observed_value + 1)),3),30)
+    pred_correction <- numeric(correction_length)
+    pred_correction[1] <- (last_observed_value - pred_visits_trend[1]) / 2
+    for (i in 2:correction_length){
+      last_observed_value <- pred_visits_trend[i-1] + pred_correction[i-1]   
+      pred_correction[i] <- (last_observed_value - pred_visits_trend[i]) / 2
+    }
+    
+    #########
+    
+    ## add correction to trend
+    pred_visits <- numeric(60)
+    pred_visits <- pred_visits_trend[1:length(pred_visits_trend)]
+    pred_visits[1:correction_length] <- pred_visits_trend[1:correction_length] + pred_correction
+    pred_visits <- pmax(ceiling(rowSums(cbind(pred_visits, pred_visits_weekday_movements))), rep(0, length(pred_visits)))
+  }
+  
+  # add predictions to data
+  page_predictions <- data.frame(Page = rep(page_data$Page[1], 60),
+                                   Date = pred_dates,
+                                   Visits = pred_visits)
+  
+  # page_combined <- rbind(page_data %>% select(Page, Date, Visits), page_predictions)
+  return(page_predictions)
+}
+
+page_data_1 <- train_1 %>% slice(4325)
+
+submission_test <- predict_1(page_data_1)
+
+for (i in 2:500){
+  print(i)
+  page_data_1 <- train_1 %>% slice(i)
+  predict_output <- suppressWarnings(predict_1(page_data_1))
+  submission_test <- rbind(submission_test, predict_output)
+}
+
+
+
+
+# Plot prediction
+# page_combined %>%
+#   ggplot(aes(x = Date, y = Visits)) +
+#     geom_line() +
+#     geom_vline(xintercept = as.numeric(page_combined$Date[551]), colour = "blue", linetype = 2)
 
 
 
