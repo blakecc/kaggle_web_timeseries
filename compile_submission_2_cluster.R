@@ -16,7 +16,7 @@ train_1 <- fread("data/train_1.csv", header = T, encoding = "UTF-8")
 
 source("R/helpers.R")
 
-cl <- startMPICluster(15)
+cl <- startMPIcluster()
 registerDoMPI(cl)
 
 loop_num <- 72
