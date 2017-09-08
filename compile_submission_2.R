@@ -50,8 +50,6 @@ stopCluster(cl)
 # temp <- lapply((lap_size*loop_num + 1):(nrow(train_1)), function(x) {predict_1(slice(train_1, x))})
 # submission_test <- rbind(submission_test, temp)
 
-# submission_test <- data.frame(Page = submission_test$Page, Date = submission_test$Date, Visits = submission_test$Visits)
-
 # Save predictions
 
 saveRDS(submission_test, "output/submission_test.rds")

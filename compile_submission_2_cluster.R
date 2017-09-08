@@ -19,7 +19,7 @@ source("R/helpers.R")
 cl <- startMPICluster(15)
 registerDoMPI(cl)
 
-loop_num <- 4
+loop_num <- 72
 lap_size <- 2000
 
 submission_test <- foreach(i=1:loop_num, .combine=rbind, .packages = c("dplyr", "tidyr", "stringr", "lubridate", "data.table")) %dopar% {
