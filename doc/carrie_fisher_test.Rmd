@@ -466,24 +466,28 @@ predict_1 <- function(page_data){
       page_data$Bimonthly_rateOC <- rep(0, length(page_data$Visits))
     }
     
-    weekday_model <- lm(weekday_var ~ weekday:I(Visits_lag1^3) + I(week_ma^2) + week_ma + log(week_ma) + Bimonthly_rateOC, data = page_data, na.action = na.omit)
-    # summary(weekday_model)
-    
-    
-    pred_visits_weekday_movements <-
-      try(ceiling(predict.lm(weekday_model,
-                         newdata = data.frame(weekday = weekdays(pred_dates),
-                                              week_ma = rep(page_data$week_ma[nrow(page_data)], length(pred_dates)),
-                                              Visits_lag1 = rep(page_data$Visits_lag1[nrow(page_data)], length(pred_dates)),
-                                              Bimonthly_rateOC = rep(page_data$Bimonthly_rateOC[nrow(page_data)], length(pred_dates))))), TRUE)
-    
-    if (class(pred_visits_weekday_movements) == "try-error"){
+    if (length(levels(page_data$weekday)) != 7) {
       pred_visits_weekday_movements <- rep(0, 60)
-    } else if (is.na(mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)))) {
-      pred_visits_weekday_movements <- pred_visits_weekday_movements
-    } else if (mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)) >= 0.5 ){
-      pred_visits_weekday_movements <- ceiling(pred_visits_weekday_movements - mean(pred_visits_weekday_movements))
-    } 
+    } else {
+        weekday_model <- lm(weekday_var ~ weekday:I(Visits_lag1^3) + I(week_ma^2) + week_ma + log(week_ma) + Bimonthly_rateOC, data = page_data, na.action = na.omit)
+        # summary(weekday_model)
+        
+        
+        pred_visits_weekday_movements <-
+          try(ceiling(predict.lm(weekday_model,
+                                 newdata = data.frame(weekday = weekdays(pred_dates),
+                                                      week_ma = rep(page_data$week_ma[nrow(page_data)], length(pred_dates)),
+                                                      Visits_lag1 = rep(page_data$Visits_lag1[nrow(page_data)], length(pred_dates)),
+                                                      Bimonthly_rateOC = rep(page_data$Bimonthly_rateOC[nrow(page_data)], length(pred_dates))))), TRUE)
+        
+        if (class(pred_visits_weekday_movements) == "try-error"){
+          pred_visits_weekday_movements <- rep(0, 60)
+        } else if (is.na(mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)))) {
+          pred_visits_weekday_movements <- pred_visits_weekday_movements
+        } else if (mean(mean(pred_visits_weekday_movements) / range(pred_visits_weekday_movements)) >= 0.5 ){
+          pred_visits_weekday_movements <- ceiling(pred_visits_weekday_movements - mean(pred_visits_weekday_movements))
+        } 
+    }
     
     
     ###############
@@ -528,7 +532,7 @@ predict_1 <- function(page_data){
   return(page_predictions)
 }
 
-page_data_1 <- train_1 %>% slice(4325)
+page_data_1 <- train_1 %>% slice(5)
 
 submission_test <- predict_1(page_data_1)
 

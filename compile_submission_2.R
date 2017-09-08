@@ -29,7 +29,7 @@ registerDoParallel(cl)
 # registerDoSEQ() 
 
 loop_num <- 4
-lap_size <- 2000
+lap_size <- 5
 
 # submission_test <- foreach(i=1:nrow(train_1), .combine=rbind.data.frame) %dopar% {
 system.time(submission_test <- foreach(i=1:loop_num, .combine=rbind, .packages = c("dplyr", "magrittr", "tidyr", "stringr", "lubridate", "data.table")) %dopar% {
@@ -44,11 +44,15 @@ system.time(submission_test <- foreach(i=1:loop_num, .combine=rbind, .packages =
   # # rbind.data.frame(predict_output)
 })
 
-
+registerDoSEQ()
 stopCluster(cl)
 
-# temp <- lapply((lap_size*loop_num + 1):(nrow(train_1)), function(x) {predict_1(slice(train_1, x))})
-# submission_test <- rbind(submission_test, temp)
+loop_num <- 72
+lap_size <- 2014
+
+system.time(temp <- lapply((lap_size*loop_num + 1):(nrow(train_1)), function(x) {predict_1(slice(train_1, x))}))
+system.time(temp <- do.call(rbind, temp))
+submission_test <- rbind(submission_test, temp)
 
 # Save predictions
 

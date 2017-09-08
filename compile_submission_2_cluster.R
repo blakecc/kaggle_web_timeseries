@@ -20,7 +20,7 @@ cl <- startMPIcluster()
 registerDoMPI(cl)
 
 loop_num <- 72
-lap_size <- 2000
+lap_size <- floor(nrow(train_1) / loop_num)
 
 submission_test <- foreach(i=1:loop_num, .combine=rbind, .packages = c("dplyr", "tidyr", "stringr", "lubridate", "data.table")) %dopar% {
   
@@ -32,11 +32,14 @@ submission_test <- foreach(i=1:loop_num, .combine=rbind, .packages = c("dplyr", 
 }
 
 closeCluster(cl)
-mpi.quit()
+
 
 temp <- lapply((lap_size*loop_num + 1):(nrow(train_1)), function(x) {predict_1(slice(train_1, x))})
+temp <- do.call(rbind, temp)
 submission_test <- rbind(submission_test, temp)
 
 # Save predictions
 
 saveRDS(submission_test, "output/submission_test.rds")
+
+mpi.quit()
