@@ -5,14 +5,14 @@ library(data.table)
 
 rm(list = ls())
 
-model_output <- readRDS("output/submission_test.rds")
+model_output <- readRDS("output/submission_test_2.rds")
 
 
 # model_output_wide <- model_output %>% spread(key = Date, value = Visits)
 
 
-key_1 <- fread("data/key_1.csv", header = T, encoding = "UTF-8")
-# sample_submission_1 <- fread("data/sample_submission_1.csv", header = T, encoding = "UTF-8")
+key_1 <- fread("data/key_2.csv", header = T, encoding = "UTF-8")
+# sample_submission_1 <- fread("data/sample_submission_2.csv", header = T, encoding = "UTF-8")
 
 
 key_sep <- key_1 %>%
@@ -32,6 +32,6 @@ test_submission <- left_join(key_sep, model_output, by = c("Page", "Date")) %>%
   mutate(Visits = as.integer(Visits)) %>%
   mutate(Visits = ifelse(is.na(Visits), 0, Visits))
 
-write_csv(test_submission, "output/170908_2_key.csv")
+write_csv(test_submission, "output/170910_Predict2_1_key.csv")
 
 

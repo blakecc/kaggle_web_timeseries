@@ -5,7 +5,14 @@
 data/key_1.csv
 data/sample_submission_1.csv
 data/train_1.csv
+data/key_2.csv
+data/sample_submission_2.csv
+data/train_2.csv
 output/key.csv
 output/170903_1_key.csv
 output/submission_test.rds
 output/170908_2_key.csv
+output/submission_test_2.rds
+output/170910_60ma_1_key.csv
+output/170910_60med_1_key.csv
+output/170910_Predict2_1_key.csv
