@@ -7,3 +7,5 @@ data/sample_submission_1.csv
 data/train_1.csv
 output/key.csv
 output/170903_1_key.csv
+output/submission_test.rds
+output/170908_2_key.csv

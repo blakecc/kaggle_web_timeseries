@@ -26,10 +26,12 @@ key_sep$Date <- as.character(key_sep$Date)
 model_output$Page <- as.character(model_output$Page)
 key_sep$Page <- as.character(key_sep$Page)
 
-test_submission <- left_join(model_output, key_sep, by = c("Page", "Date")) %>%
+test_submission <- left_join(key_sep, model_output, by = c("Page", "Date")) %>%
   select(Id, Visits) %>%
-  mutate(Visits = as.integer(Visits))
+  mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %>%
+  mutate(Visits = as.integer(Visits)) %>%
+  mutate(Visits = ifelse(is.na(Visits), 0, Visits))
 
-write_csv(submission1, "output/170904_1_key.csv")
+write_csv(test_submission, "output/170908_2_key.csv")
 
 
