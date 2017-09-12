@@ -18,9 +18,9 @@ library(data.table)
 
 rm(list = ls())
 
-train_1 <- fread("data/train_2.csv", header = T, encoding = "UTF-8")
-key_1 <- fread("data/key_2.csv", header = T, encoding = "UTF-8")
-sample_submission_1 <- fread("data/sample_submission_2.csv", header = T, encoding = "UTF-8")
+train_1 <- fread("../data/train_1.csv", header = T, encoding = "UTF-8")
+key_1 <- fread("../data/key_1.csv", header = T, encoding = "UTF-8")
+# sample_submission_1 <- fread("data/sample_submission_2.csv", header = T, encoding = "UTF-8")
 
 # head(sample_submission_1, 10)
 # head(key_1, 10)
@@ -71,9 +71,9 @@ print(train_zh_sample[1,]$Page)
 ```{r}
 
 # average of last 10 days for train data
-# train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
-train_1$MA_60 <- apply(train_1[,(ncol(train_1) - 60):ncol(train_1)], 1, mean, na.rm = T) # last 60 days MA
-train_1$Med_60 <- apply(train_1[,(ncol(train_1) - 60):ncol(train_1)], 1, median, na.rm = T) # last 60 days median
+train_1$MA_10 <- apply(train_1[,540:551], 1, mean, na.rm = T) # last ten days MA
+# train_1$MA_60 <- apply(train_1[,(ncol(train_1) - 60):ncol(train_1)], 1, mean, na.rm = T) # last 60 days MA
+# train_1$Med_60 <- apply(train_1[,(ncol(train_1) - 60):ncol(train_1)], 1, median, na.rm = T) # last 60 days median
 # train_1$MA_10 <- train_1[,551] # last value
 
 # train_1 %>%
@@ -81,7 +81,7 @@ train_1$Med_60 <- apply(train_1[,(ncol(train_1) - 60):ncol(train_1)], 1, median,
 #   filter(Page == "\"\"Keep_me_logged_in\"\"_extended_to_one_year_www.mediawiki.org_all-access_all-agents")
 
 train_2 <- train_1 %>%
-  select(Page, Med_60)
+  select(Page, MA_10)
 
 # head(train_2)
 
@@ -90,13 +90,13 @@ test_submission <- left_join(key_sep, train_2, by = "Page")
 # head(sample_submission_1)
 
 submission1 <- test_submission %>%
-  mutate(MA_10 = ceiling(Med_60)) %>%
-  rename(Visits = Med_60) %>%
+  mutate(MA_10 = ceiling(MA_10)) %>%
+  rename(Visits = MA_10) %>%
   select(Id, Visits) %>%
   mutate(Visits = ifelse(is.na(Visits), 0, Visits)) %>%
   mutate(Visits = as.integer(Visits))
 
-write_csv(submission1, "output/170910_60med_1_key.csv")
+write_csv(submission1, "../output/170912_10MA_round1_key.csv")
 
 
 # head(submission1)

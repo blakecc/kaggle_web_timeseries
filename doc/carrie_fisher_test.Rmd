@@ -555,3 +555,35 @@ for (i in 2:500){
 
 
 ```
+
+# Test actual function
+```{r}
+
+source("../R/helpers.R")
+
+train_data <- fread("../data/train_2.csv")
+```
+```{r}
+
+example_obs <- train_data %>% slice(11125)
+example_output <- predict_2(example_obs)
+example_obs <- example_obs %>% gather(-Page, key = Date, value = Visits) %>% mutate(Date = as.Date(Date))
+
+example_combined <- rbind(example_obs, example_output)
+
+split_date <- example_combined$Date[1]
+
+site_name <- as.character(unique(example_combined$Page))
+y_max <- max(example_combined$Visits, na.rm = T)/2
+
+example_combined %>%
+  ggplot() +
+    geom_line(aes(x = Date, y = Visits)) +
+    geom_vline(xintercept = as.numeric(as.Date("2017-09-01")), colour = "blue", linetype = 3) +
+    geom_vline(xintercept = as.numeric(as.Date("2017-09-13")), colour = "red", linetype = 3) +
+    annotate("text", x = as.Date("2015-09-01"), y = y_max, label = site_name, hjust = 0)
+
+
+
+
+```
